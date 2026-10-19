@@ -19,10 +19,24 @@
 //   useSSE            from "../hooks/useSSE.js"
 //   useNotifications  from "../context/NotificationContext.jsx"
 // ─────────────────────────────────────────────────────────────
+import { useCallback } from "react";
 import NavBar from "./NavBar.jsx";
+import { useSSE } from "../hooks/useSSE.js";
+import { useNotifications } from "../context/NotificationContext.jsx";
 
 export default function AppShell({ children }) {
-  // TODO: add the three steps described above.
+  const { dispatch } = useNotifications();
+
+  // Stable callback — without useCallback, a new function reference is
+  // created on every render, which makes useSSE reconnect the stream on
+  // every render (reconnect thrashing). dispatch from useReducer is
+  // guaranteed stable by React.
+  const handleMessage = useCallback(
+    (data) => dispatch({ type: "ADD_NOTIFICATION", payload: data }),
+    [dispatch]
+  );
+
+  useSSE("/api/notifications/stream", handleMessage);
 
   return (
     <div>
